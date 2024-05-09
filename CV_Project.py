@@ -85,8 +85,17 @@ class ImageGUI:
         print(full_path)
         file = tb.open_file(full_path, mode='r')
         print(file.root.image)
+        
+        # Get Image
         glioma_images = file.root.image.read()
+        # Get Mask
+        mask_images = file.root.mask.read()
         file.close()
+
+        # merge non-overlapping masks by addition
+        merge_one = mask_images[:,:,0] + mask_images[:,:,1] + mask_images[:,:,2]
+        print('Mask Shape: ', merge_one.shape)
+        
         # Get Channel index
         channels = {"T1": 0, "T1Gd": 1, "T2": 2, "T2 FLAIR": 3}
         channel_index = channels.get(self.channel_var.get())
@@ -98,10 +107,20 @@ class ImageGUI:
         print(channel_image.shape)
 
         image_file = io.BytesIO()
+        mask_file = io.BytesIO()
         plt.imsave(image_file, channel_image, cmap = 'gray')
+        plt.imsave(mask_file, merge_one, cmap = 'gray')
+        
         print(image_file)
         pil_image = Image.open(image_file)
+        pil_mask = Image.open(mask_file)
+
+        annotation = self.annotation_var.get() == 'On'
         
+        print('annotation: ', annotation)
+        if (annotation):
+            pil_image = Image.blend(pil_image, pil_mask, 0.5)
+
         # Resize the image to fit in the image_label label
         width, height = pil_image.size
         print(width,height)
