@@ -1,15 +1,14 @@
 import os
 import tkinter as tk
 from tkinter import filedialog
+import tkfilebrowser
 from PIL import ImageTk, Image
 from exceptiongroup import catch
-import numpy as np
-import cv2
-from scipy import ndimage
 import matplotlib.pyplot as plt
 import tables as tb
 import io
-
+import pandas as pd
+import Feature_Extractor as ft
 
 class ImageGUI:
    
@@ -62,7 +61,7 @@ class ImageGUI:
         self.annotation_option.grid(column = 1, row = 5, padx = 10, pady = 10, sticky="nsew")
 
         # Create a "Extract Conventional Features" button
-        self.conventional_button = tk.Button(self.border, text="Extract Conventional Features", command=self.updateValue)
+        self.conventional_button = tk.Button(self.border, text="Extract Conventional Features", command=self.extract_conv_ft)
         self.conventional_button.grid(column = 1, row = 6, padx = 10, pady = 10)
 
         # Create a "Extract Radiomic Features" button
@@ -78,7 +77,7 @@ class ImageGUI:
 
     def showSliceImage(self, index):
         entries = os.listdir(self.file_path+'/')
-        print(entries)
+        #print(entries)
         volume = entries[0].split('_')[1]
         file_name = 'volume_{}_slice_{}.h5'.format(volume, str(index))
         full_path = self.file_path + '/' + file_name
@@ -145,6 +144,30 @@ class ImageGUI:
         print('slice_id: ', slice_id)
         self.showSliceImage(slice_id)
 
+    def extract_conv_ft(self):
+        root_path = filedialog.askdirectory(title="Select Volume Folder")
+        entries = os.listdir(root_path + '/')
+        
+        dirs = [d for d in entries if os.path.isdir(root_path + '/' + d)]
+        print(dirs)
+
+        df = pd.DataFrame(columns=['area', 'diameter', 'out_layer_involvement'], index=dirs)
+        print(df)
+        for path in dirs:
+            full_path = root_path + '/' + path
+            entries = os.listdir(full_path + '/')
+            volume = entries[0].split('_')[1]
+            print('volume', volume, full_path)
+            extractor = ft.Extractor(full_path, int(volume))
+            area, diameter, involvement  = extractor.conventional_features()
+            df.loc['volume_' + volume] = [area, diameter, involvement]
+        df.to_csv('conventional_features.csv')
+
+    
+    def extract_radi_ft(self):
+        a = 5
+        b = 'a'
+        return a, b 
  
             
 if __name__ == "__main__":
