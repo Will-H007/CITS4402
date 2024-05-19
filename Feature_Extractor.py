@@ -9,6 +9,23 @@ import tables as tb
 TOTAL_SLICES = 155
 TOTAL_VOLUME = 370
 
+SHAPE_FEATURES = ['original_shape_MajorAxisLength', 'original_shape_MinorAxisLength', 'original_shape_Elongation',
+                  'original_shape_LeastAxisLength', 'original_shape_Flatness', 'original_shape_Maximum2DDiameterRow',
+                  'original_shape_MeshVolume', 'original_shape_VoxelVolume', 'original_shape_Maximum2DDiameterSlice',
+                  'original_shape_Maximum3DDiameter']
+
+INTENSITY_FEATURES = ['original_firstorder_Uniformity', 'original_firstorder_Range', 
+                      'original_firstorder_Maximum', 'original_firstorder_InterquartileRange', 'original_firstorder_90Percentile',
+                      'original_firstorder_Kurtosis', 'original_firstorder_RootMeanSquared', 'original_firstorder_MeanAbsoluteDeviation',
+                      'original_firstorder_Mean', 'original_firstorder_Median']
+
+TEXTURE_FEATURES = ['original_glcm_Idmn', 'original_glcm_Idn', 'original_glcm_Id', 'original_glcm_Idm', 
+                    'original_gldm_GrayLevelNonUniformity', 'original_gldm_LargeDependenceEmphasis', 'original_glrlm_RunEntropy',
+                    'original_glcm_MaximumProbability', 'original_glcm_JointEnergy', 'original_glrlm_RunLengthNonUnifo']
+
+
+
+
 class Extractor():
     def __init__(self, path, volume_index) -> None:
         mask_list = []
@@ -201,9 +218,15 @@ class Extractor():
             3: f'T2_{self.volume_index}'
         }
 
-        rm_features = pd.DataFrame(features_sets).T
-        rm_features.rename(columns=column_mapping, inplace=True)
-        return rm_features
+        rm_features = pd.DataFrame(features_sets)
+
+        result = []
+        for ft in [SHAPE_FEATURES, INTENSITY_FEATURES, TEXTURE_FEATURES]:
+            mean = rm_features.loc[:, ft].mean()
+            print(ft, ' : ',mean)
+            result.append(mean)
+
+        return result
     
 
     def conventional_features(self):

@@ -65,7 +65,7 @@ class ImageGUI:
         self.conventional_button.grid(column = 1, row = 6, padx = 10, pady = 10)
 
         # Create a "Extract Radiomic Features" button
-        self.radiomic_button = tk.Button(self.border, text="Extract Radiomic Features", command=self.updateValue)
+        self.radiomic_button = tk.Button(self.border, text="Extract Radiomic Features", command=self.extract_radi_ft)
         self.radiomic_button.grid(column = 1, row = 7, padx = 10, pady = 10, sticky="w")
 
     def load_directory(self):
@@ -144,31 +144,51 @@ class ImageGUI:
         print('slice_id: ', slice_id)
         self.showSliceImage(slice_id)
 
-    def extract_conv_ft(self):
+    def getDirs(self):
         root_path = filedialog.askdirectory(title="Select Volume Folder")
         entries = os.listdir(root_path + '/')
         
         dirs = [d for d in entries if os.path.isdir(root_path + '/' + d)]
-        print(dirs)
+        dirs_list = []
 
-        df = pd.DataFrame(columns=['area', 'diameter', 'out_layer_involvement'], index=dirs)
-        print(df)
         for path in dirs:
             full_path = root_path + '/' + path
             entries = os.listdir(full_path + '/')
             volume = entries[0].split('_')[1]
-            print('volume', volume, full_path)
-            extractor = ft.Extractor(full_path, int(volume))
+            dirs_list.append((int(volume), path))
+        
+        dirs_list.sort()
+
+        return root_path, dirs, dirs_list
+
+    def extract_conv_ft(self):
+        root_path, dirs, dirs_list = self.getDirs()
+        df = pd.DataFrame(columns=['area', 'diameter', 'out_layer_involvement'], index=dirs)
+        print(df)
+        for vol, path in dirs_list:
+            full_path = root_path + '/' + path
+            print('volume', vol, full_path)
+            extractor = ft.Extractor(full_path, vol)
             area, diameter, involvement  = extractor.conventional_features()
-            df.loc['volume_' + volume] = [area, diameter, involvement]
+            df.loc['volume_' + str(vol)] = [area, diameter, involvement]
         df.to_csv('conventional_features.csv')
 
     
     def extract_radi_ft(self):
-        a = 5
-        b = 'a'
-        return a, b 
- 
+        root_path, dirs, dirs_list = self.getDirs()
+        df = pd.DataFrame(columns=[ft.SHAPE_FEATURES, ft.INTENSITY_FEATURES, ft.TEXTURE_FEATURES], index=dirs)
+        print(df.columns)
+
+        for vol, path in dirs_list:
+            full_path = root_path + '/' + path
+            print('volume', vol, full_path)
+            extractor = ft.Extractor(full_path, vol)
+            rm_feature = extractor.radiomic_features()
+            df.loc['volume_' + str(vol)] = rm_feature 
+            break
+        df.to_csv('radiomic_features.csv')
+        
+
             
 if __name__ == "__main__":
     root = tk.Tk()
