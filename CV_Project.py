@@ -158,13 +158,14 @@ class ImageGUI:
             dirs_list.append((int(volume), path))
         
         dirs_list.sort()
+        dirs = [ f'volume_{str(vol)}' for vol, path in dirs_list]
 
         return root_path, dirs, dirs_list
 
     def extract_conv_ft(self):
         root_path, dirs, dirs_list = self.getDirs()
         df = pd.DataFrame(columns=['area', 'diameter', 'out_layer_involvement'], index=dirs)
-        print(df)
+        print(df.columns)
         for vol, path in dirs_list:
             full_path = root_path + '/' + path
             print('volume', vol, full_path)
@@ -172,21 +173,23 @@ class ImageGUI:
             area, diameter, involvement  = extractor.conventional_features()
             df.loc['volume_' + str(vol)] = [area, diameter, involvement]
         df.to_csv('conventional_features.csv')
+        print('extract_conv_ft - done')
 
     
     def extract_radi_ft(self):
         root_path, dirs, dirs_list = self.getDirs()
-        df = pd.DataFrame(columns=[ft.SHAPE_FEATURES, ft.INTENSITY_FEATURES, ft.TEXTURE_FEATURES], index=dirs)
-        print(df.columns)
+        df = pd.DataFrame(columns=ft.RADIOMIC_FEATURES, index=dirs)
+#        print(df.head(5))
 
         for vol, path in dirs_list:
             full_path = root_path + '/' + path
             print('volume', vol, full_path)
             extractor = ft.Extractor(full_path, vol)
             rm_feature = extractor.radiomic_features()
-            df.loc['volume_' + str(vol)] = rm_feature 
-            break
+            df.loc['volume_' + str(vol)] = rm_feature
+
         df.to_csv('radiomic_features.csv')
+        print('extract_radi_ft - done')
         
 
             
